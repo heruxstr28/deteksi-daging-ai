@@ -23,7 +23,7 @@ const ai = new GoogleGenAI({ apiKey: apiKey });
 const storage = multer.memoryStorage();
 const upload = multer({ storage: storage });
 
-app.use(express.static('public'));
+app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json());
 
 const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
