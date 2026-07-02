@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SmartMeat AI - Premium Quality Control</title>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- Font Awesome untuk Ikon Modern -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --gold-primary: #d4af37;
+            --gold-light: #f3e5ab;
+            --gold-dark: #aa7c11;
+            --dark-bg: #121212;
+            --dark-card: #1e1e1e;
+            --dark-border: #2e2e2e;
+            --text-light: #f5f5f5;
+            --text-muted: #aaaaaa;
+            --status-red: #ef5350;
+            --status-green: #2bc472;
+            --status-orange: #e67e22;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
+        
+        body { background-color: var(--dark-bg); color: var(--text-light); padding: 20px; min-height: 100vh; }
+
+        .container { max-width: 1100px; margin: 0 auto; display: grid; grid-template-columns: 1fr; gap: 25px; padding: 10px; }
+
+        @media (min-width: 850px) {
+            .container { grid-template-columns: 1.6fr 1.4fr; }
+            .header-banner { grid-column: span 2; }
+        }
+
+        /* Header Banner */
+        .header-banner { text-align: center; padding: 30px 20px; background: linear-gradient(135deg, #1e1e1e, #0a0a0a); border-radius: 16px; border: 1px solid var(--gold-primary); box-shadow: 0 4px 20px rgba(212, 175, 55, 0.15); }
+        .header-banner h1 { color: var(--gold-primary); font-size: 2.2rem; font-weight: 700; margin-bottom: 8px; letter-spacing: 1px; }
+        .header-banner h1 i { margin-right: 10px; }
+        .header-banner p { color: var(--text-muted); font-size: 0.95rem; }
+
+        /* Left/Right Column wrappers */
+        .left-column { display: flex; flex-direction: column; gap: 25px; }
+        .right-column { display: flex; flex-direction: column; gap: 25px; }
+
+        /* Main Cards */
+        .card { background: var(--dark-card); padding: 25px; border-radius: 16px; border: 1px solid var(--dark-border); box-shadow: 0 8px 30px rgba(0,0,0,0.5); }
+        .card-title { font-size: 1.25rem; color: var(--gold-light); margin-bottom: 20px; display: flex; align-items: center; gap: 10px; border-bottom: 1px solid var(--dark-border); padding-bottom: 10px; }
+
+        /* Drag and Drop Area */
+        .upload-section { border: 2px dashed #444; padding: 40px 20px; text-align: center; border-radius: 12px; cursor: pointer; background: #151515; transition: all 0.3s ease; position: relative; margin-bottom: 20px; }
+        .upload-section:hover { border-color: var(--gold-primary); background: #1a1a1a; }
+        .upload-section i { font-size: 3rem; color: var(--gold-primary); margin-bottom: 15px; }
+        #preview { max-width: 100%; max-height: 280px; display: none; margin: 15px auto 0; border-radius: 8px; border: 2px solid var(--gold-dark); object-fit: contain; }
+
+        /* Buttons Group */
+        .btn-group { display: grid; grid-template-columns: 1fr; gap: 10px; }
+        @media (min-width: 480px) { .btn-group { grid-template-columns: 2fr 1fr 1fr; } }
+        
+        button { padding: 14px 20px; border: none; border-radius: 8px; font-size: 0.95rem; font-weight: 600; cursor: pointer; transition: all 0.2s ease; display: flex; align-items: center; justify-content: center; gap: 8px; }
+        .btn-primary { background: linear-gradient(135deg, var(--gold-primary), var(--gold-dark)); color: #111; }
+        .btn-primary:hover:not(:disabled) { transform: translateY(-2px); box-shadow: 0 4px 15px rgba(212,175,55,0.4); }
+        .btn-secondary { background: #2a2a2a; color: var(--text-light); border: 1px solid #3a3a3a; }
+        .btn-secondary:hover:not(:disabled) { background: #3a3a3a; color: var(--gold-light); }
+        button:disabled { opacity: 0.5; cursor: not-allowed; }
+
+        /* Loading Spinner */
+        #loading { display: none; text-align: center; padding: 30px 0; color: var(--gold-light); font-weight: 500; }
+        #loading i { font-size: 2rem; margin-bottom: 10px; color: var(--gold-primary); }
+
+        /* Error Banner */
+        #errorBanner { display: none; background: rgba(239, 83, 80, 0.1); border: 1px solid var(--status-red); border-left: 5px solid var(--status-red); padding: 15px; border-radius: 8px; margin-top: 20px; animation: fadeIn 0.4s ease; }
+        #errorBanner h4 { color: var(--status-red); margin-bottom: 5px; display: flex; align-items: center; gap: 8px; }
+        #errorBanner p { font-size: 0.9rem; color: #fcc; line-height: 1.4; }
+
+        /* Results Layout (Optimized for Sidebar) */
+        #result { display: none; animation: fadeIn 0.5s ease; }
+        .result-layout { display: flex; flex-direction: column; gap: 20px; }
+        
+        .info-container { display: flex; flex-direction: column; gap: 15px; }
+        .info-item { background: #181818; padding: 12px 16px; border-radius: 8px; border-left: 4px solid var(--gold-primary); }
+        .info-item label { font-size: 0.8rem; text-transform: uppercase; color: var(--text-muted); display: block; margin-bottom: 4px; font-weight: 600; letter-spacing: 0.5px; }
+        .info-item span { font-size: 1rem; color: #ffffff; }
+        
+        .chart-container { width: 180px; height: 180px; margin: 0 auto 10px; flex-shrink: 0; position: relative; }
+
+        /* Results Placeholder */
+        #resultPlaceholder { display: flex; flex-direction: column; align-items: center; justify-content: center; min-height: 350px; text-align: center; color: var(--text-muted); border: 2px dashed #333; border-radius: 12px; padding: 20px; }
+        #resultPlaceholder i { font-size: 3.5rem; color: #333; margin-bottom: 15px; }
+
+        /* History (Optimized for Bottom/Wide Area) */
+        .history-card { height: fit-content; }
+        .history-list { max-height: 250px; overflow-y: auto; display: flex; flex-direction: column; gap: 10px; padding-right: 5px; }
+        .history-list::-webkit-scrollbar { width: 5px; }
+        .history-list::-webkit-scrollbar-thumb { background: #333; border-radius: 10px; }
+        
+        .history-item { background: #181818; padding: 14px 18px; border-radius: 8px; border: 1px solid var(--dark-border); display: flex; justify-content: space-between; align-items: center; transition: 0.2s; cursor: pointer; }
+        .history-item:hover { border-color: var(--gold-primary); background: #202020; }
+        .history-meta h4 { font-size: 0.95rem; color: var(--gold-light); margin-bottom: 2px; }
+        .history-meta p { font-size: 0.75rem; color: var(--text-muted); }
+        .badge { padding: 4px 10px; border-radius: 12px; font-size: 0.75rem; font-weight: bold; background: var(--gold-dark); color: #fff; }
+        .btn-delete-history { background: transparent; border: none; color: var(--status-red); padding: 5px; cursor: pointer; font-size: 1rem; }
+        .btn-delete-history:hover { color: #f44336; }
+        .empty-history { text-align: center; color: var(--text-muted); font-size: 0.85rem; padding: 20px 0; }
+
+        /* Custom Notification Toast */
+        #toast { display: none; position: fixed; bottom: 30px; right: 30px; background: #2c2c2c; border: 1px solid var(--gold-primary); padding: 15px 25px; border-radius: 8px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 1000; animation: slideIn 0.3s ease; }
+        #toast.success { border-left: 5px solid var(--status-green); }
+        #toast.error { border-left: 5px solid var(--status-red); }
+        #toast.warning { border-left: 5px solid var(--status-orange); }
+
+        /* Modal Popup Dialog */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.8); z-index: 2000; align-items: center; justify-content: center; padding: 15px; }
+        .modal-content { background: var(--dark-card); border: 1px solid var(--gold-primary); border-radius: 12px; max-width: 450px; width: 100%; padding: 25px; box-shadow: 0 10px 40px rgba(0,0,0,0.6); animation: scaleUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275); }
+        .modal-header { font-size: 1.15rem; font-weight: bold; margin-bottom: 12px; color: var(--gold-light); display: flex; align-items: center; gap: 10px; }
+        .modal-body { font-size: 0.95rem; color: #ddd; margin-bottom: 20px; line-height: 1.5; }
+        .modal-buttons { display: flex; justify-content: flex-end; gap: 10px; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        @keyframes slideIn { from { transform: translateY(50px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+        @keyframes scaleUp { from { transform: scale(0.9); opacity: 0; } to { transform: scale(1); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <!-- Header Banner -->
+    <div class="header-banner">
+        <h1><i class="fa-solid fa-shield-halved"></i>SmartMeat AI Checker</h1>
+        <p>Sistem Penguji Kualitas & Kelayakan Keamanan Pangan Berbasis Kecerdasan Buatan</p>
+    </div>
+
+    <!-- Left Column: Workspace & History -->
+    <div class="left-column">
+        <!-- Panel Analisis -->
+        <div class="card">
+            <div class="card-title"><i class="fa-solid fa-wand-magic-sparkles"></i> Panel Analisis</div>
+            
+            <form id="uploadForm">
+                <div class="upload-section" id="dropArea">
+                    <div id="uploadPrompt">
+                        <i class="fa-solid fa-cloud-arrow-up"></i>
+                        <p style="font-weight: 500; margin-bottom: 5px;">Pilih Gambar Daging/Ikan</p>
+                        <p style="font-size: 0.8rem; color: var(--text-muted);">Mendukung format JPG, JPEG, atau PNG</p>
+                    </div>
+                    <input type="file" id="fileInput" name="gambarDaging" accept="image/*" style="display: none;">
+                    <img id="preview" alt="Pratinjau Komoditas">
+                </div>
+
+                <div class="btn-group">
+                    <button type="submit" id="btnSubmit" class="btn-primary">
+                        <i class="fa-solid fa-magnifying-glass"></i> Mulai Analisis
+                    </button>
+                    <button type="button" id="btnRemoveImage" class="btn-secondary" disabled>
+                        <i class="fa-solid fa-trash-can"></i> Hapus
+                    </button>
+                    <button type="button" id="btnRefresh" class="btn-secondary">
+                        <i class="fa-solid fa-rotate"></i> Reset
+                    </button>
+                </div>
+            </form>
+
+            <!-- Banner Panduan Solusi Eror Dinamis -->
+            <div id="errorBanner">
+                <h4><i class="fa-solid fa-triangle-exclamation"></i> Kendala Terdeteksi di Server</h4>
+                <p id="errorText">Detail pesan eror akan dimuat di sini.</p>
+                <div style="margin-top: 10px; font-size: 0.8rem; color: #aaa; border-top: 1px solid rgba(239, 83, 80, 0.2); padding-top: 8px;">
+                    💡 <strong>Saran Tindakan:</strong> Pastikan Anda telah meletakkan file <code>.env</code> di dalam folder utama proyek, mendaftarkan <code>GEMINI_API_KEY</code> yang valid dari Google AI Studio, dan mengaktifkan koneksi internet Anda.
+                </div>
+            </div>
+
+            <div id="loading">
+                <i class="fa-solid fa-circle-notch fa-spin"></i>
+                <p>Kecerdasan Buatan sedang mengevaluasi visual citra...</p>
+            </div>
+        </div>
+
+        <!-- Riwayat Sesi (Pindah Ke Bawah) -->
+        <div class="card history-card">
+            <div class="card-title" style="justify-content: space-between; margin-bottom: 15px;">
+                <span><i class="fa-solid fa-clock-rotate-left"></i> Riwayat Sesi</span>
+                <span id="clearAllHistory" style="font-size: 0.75rem; color: var(--status-red); cursor: pointer; display: none;"><i class="fa-solid fa-dumpster"></i> Bersihkan</span>
+            </div>
+            <div class="history-list" id="historyContainer">
+                <div class="empty-history">Belum ada riwayat analisis.</div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Right Column: Hasil Analisis (Pindah Ke Samping) -->
+    <div class="right-column">
+        <!-- Placeholder Sebelum Analisis -->
+        <div id="resultPlaceholder">
+            <i class="fa-solid fa-chart-pie"></i>
+            <h3 style="color: var(--gold-light); margin-bottom: 8px; font-weight: 600;">Belum Ada Analisis</h3>
+            <p style="font-size: 0.85rem; max-width: 250px; line-height: 1.4;">Unggah gambar di panel sebelah kiri dan klik "Mulai Analisis" untuk melihat laporan digital secara real-time.</p>
+        </div>
+
+        <!-- Section Hasil Analisis -->
+        <div id="result" class="card">
+            <div class="card-title" style="font-size: 1.1rem; color: var(--gold-primary); margin-bottom: 15px;">
+                <i class="fa-solid fa-square-poll-horizontal"></i> Laporan Inspeksi Digital
+            </div>
+            
+            <div class="result-layout">
+                <div class="chart-container">
+                    <canvas id="gaugeChart"></canvas>
+                </div>
+
+                <div class="info-container">
+                    <div class="info-item">
+                        <label>Identifikasi Komponen</label>
+                        <span id="resJenis" style="font-weight: bold; color: var(--gold-light); font-size: 1.1rem;">-</span>
+                    </div>
+
+                    <div class="info-item">
+                        <label>Karakteristik Fisik Visual</label>
+                        <div style="font-size: 0.9rem; line-height: 1.5; color: #fff;">
+                            📌 <strong>Warna:</strong> <span id="resWarnaRingkas">-</span><br>
+                            📌 <strong>Tekstur:</strong> <span id="resTeksturRingkas">-</span><br>
+                            📌 <strong>Bentuk:</strong> <span id="resBentukRingkas">-</span>
+                        </div>
+                    </div>
+
+                    <div class="info-item" style="border-left-color: var(--gold-dark);">
+                        <label>Estimasi Batas Penyimpanan Aman</label>
+                        <div style="display: grid; grid-template-columns: 1fr; gap: 8px; margin-top: 5px; font-size: 0.85rem;">
+                            <div style="background: #181818; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                                <span style="color: var(--gold-primary); display:block; font-weight:600;">Suhu Ruang:</span>
+                                <span id="shelfSuhuRuang">-</span>
+                            </div>
+                            <div style="background: #181818; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                                <span style="color: var(--gold-primary); display:block; font-weight:600;">Kulkas (Chiller):</span>
+                                <span id="shelfKulkas">-</span>
+                            </div>
+                            <div style="background: #181818; padding: 8px; border-radius: 4px; border: 1px solid #333;">
+                                <span style="color: var(--gold-primary); display:block; font-weight:600;">Freezer:</span>
+                                <span id="shelfFreezer">-</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="info-item" id="tindakanContainer" style="border-left-color: var(--status-red);">
+                        <label>Panduan Tindakan Konsumen</label>
+                        <span id="resTindakan" style="font-weight: 500; font-size: 0.95rem;">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Custom Toast Notification -->
+<div id="toast">Notifikasi pesan.</div>
+
+<!-- Custom Modal Confirmation Dialog -->
+<div class="modal" id="confirmModal">
+    <div class="modal-content">
+        <div class="modal-header"><i class="fa-solid fa-triangle-exclamation"></i> Konfirmasi Penghapusan</div>
+        <div class="modal-body" id="modalMessage">Apakah Anda yakin ingin melakukan tindakan ini?</div>
+        <div class="modal-buttons">
+            <button class="btn-secondary" id="btnCancelModal" style="padding: 8px 16px; font-size: 0.85rem;">Batal</button>
+            <button class="btn-primary" id="btnConfirmModal" style="padding: 8px 16px; font-size: 0.85rem; background: var(--status-red); color: white;">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+
+<script>
+    const fileInput = document.getElementById('fileInput');
+    const preview = document.getElementById('preview');
+    const uploadPrompt = document.getElementById('uploadPrompt');
+    const uploadForm = document.getElementById('uploadForm');
+    const loading = document.getElementById('loading');
+    const resultDiv = document.getElementById('result');
+    const resultPlaceholder = document.getElementById('resultPlaceholder');
+    const btnSubmit = document.getElementById('btnSubmit');
+    const btnRemoveImage = document.getElementById('btnRemoveImage');
+    const btnRefresh = document.getElementById('btnRefresh');
+    const dropArea = document.getElementById('dropArea');
+    const historyContainer = document.getElementById('historyContainer');
+    const clearAllHistory = document.getElementById('clearAllHistory');
+    const errorBanner = document.getElementById('errorBanner');
+    const errorText = document.getElementById('errorText');
+    const toast = document.getElementById('toast');
+
+    let myChart = null;
+    let scanHistory = JSON.parse(localStorage.getItem('meat_scan_history')) || [];
+
+    document.addEventListener('DOMContentLoaded', renderHistoryList);
+
+    // Kustom Toast Helper
+    function showToast(message, type = 'success') {
+        toast.className = `success`;
+        toast.innerText = message;
+        toast.style.display = 'block';
+        toast.className = type;
+        setTimeout(() => {
+            toast.style.display = 'none';
+        }, 3000);
+    }
+
+    // Kustom Modal Confirmation Helper
+    function showConfirmModal(message, onConfirm) {
+        const modal = document.getElementById('confirmModal');
+        const btnCancel = document.getElementById('btnCancelModal');
+        const btnConfirm = document.getElementById('btnConfirmModal');
+        
+        document.getElementById('modalMessage').innerText = message;
+        modal.style.display = 'flex';
+
+        const closeModal = () => {
+            modal.style.display = 'none';
+        };
+
+        btnCancel.onclick = closeModal;
+        btnConfirm.onclick = () => {
+            onConfirm();
+            closeModal();
+        };
+    }
+
+    dropArea.addEventListener('click', (e) => {
+        if (e.target.id !== 'btnRemoveImage' && !btnRemoveImage.contains(e.target)) {
+            fileInput.click();
+        }
+    });
+
+    ['dragenter', 'dragover'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => { e.preventDefault(); dropArea.style.borderColor = '#d4af37'; }, false);
+    });
+    ['dragleave', 'drop'].forEach(eventName => {
+        dropArea.addEventListener(eventName, (e) => { e.preventDefault(); dropArea.style.borderColor = '#444'; }, false);
+    });
+    dropArea.addEventListener('drop', (e) => {
+        const dt = e.dataTransfer;
+        const files = dt.files;
+        if(files.length) {
+            fileInput.files = files;
+            handleFileSelect(files[0]);
+        }
+    });
+
+    fileInput.addEventListener('change', function() {
+        if (this.files[0]) handleFileSelect(this.files[0]);
+    });
+
+    function handleFileSelect(file) {
+        const reader = new FileReader();
+        uploadPrompt.style.display = 'none';
+        preview.style.display = 'block';
+        btnRemoveImage.disabled = false;
+        reader.addEventListener('load', function() {
+            preview.setAttribute('src', this.result);
+        });
+        reader.readAsDataURL(file);
+    }
+
+    btnRemoveImage.addEventListener('click', function(e) {
+        e.stopPropagation();
+        fileInput.value = "";
+        preview.style.display = 'none';
+        preview.setAttribute('src', '');
+        uploadPrompt.style.display = 'block';
+        btnRemoveImage.disabled = true;
+        showToast("Gambar berhasil dihapus.", "warning");
+    });
+
+    btnRefresh.addEventListener('click', function() {
+        fileInput.value = "";
+        preview.style.display = 'none';
+        preview.setAttribute('src', '');
+        uploadPrompt.style.display = 'block';
+        btnRemoveImage.disabled = true;
+        resultDiv.style.display = 'none';
+        resultPlaceholder.style.display = 'flex';
+        errorBanner.style.display = 'none';
+        if (myChart) myChart.destroy();
+        showToast("Panel analisis di-reset.", "success");
+    });
+
+    uploadForm.addEventListener('submit', async function(e) {
+        e.preventDefault();
+        
+        if (!fileInput.files[0]) {
+            showToast("Silakan pilih gambar daging terlebih dahulu!", "error");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append('gambarDaging', fileInput.files[0]);
+
+        loading.style.display = 'block';
+        resultDiv.style.display = 'none';
+        resultPlaceholder.style.display = 'flex';
+        errorBanner.style.display = 'none';
+        setControlsDisabled(true);
+
+        try {
+            const response = await fetch('/api/analisis-daging', {
+                method: 'POST',
+                body: formData
+            });
+
+            const data = await response.json();
+
+            if (response.ok) {
+                displayResults(data);
+                saveToHistory(data);
+                showToast("Analisis AI sukses dimuat!", "success");
+            } else {
+                errorText.innerText = data.error || "Gagal memproses gambar daging.";
+                errorBanner.style.display = 'block';
+                showToast("Gagal menganalisis citra.", "error");
+            }
+        } catch (error) {
+            console.error("Error:", error);
+            errorText.innerText = "Tidak dapat terhubung ke server backend Anda. Pastikan server Node.js aktif di latar belakang (node server.js).";
+            errorBanner.style.display = 'block';
+            showToast("Gagal melakukan kontak dengan server.", "error");
+        } finally {
+            loading.style.display = 'none';
+            setControlsDisabled(false);
+        }
+    });
+
+    function setControlsDisabled(status) {
+        btnSubmit.disabled = status;
+        btnRefresh.disabled = status;
+        btnRemoveImage.disabled = status ? true : !fileInput.files[0];
+    }
+
+    function displayResults(data) {
+        document.getElementById('resJenis').innerText = data.jenis_daging || "Tidak Teridentifikasi";
+
+        const warnaRaw = data.deskripsi.warna || "-";
+        const teksturRaw = data.deskripsi.tekstur || "-";
+        const bentukRaw = data.deskripsi.bentuk || "-";
+
+        document.getElementById('resWarnaRingkas').innerText = warnaRaw.split('.')[0] + '.';
+        document.getElementById('resTeksturRingkas').innerText = teksturRaw.split('.')[0] + '.';
+        document.getElementById('resBentukRingkas').innerText = bentukRaw.split('.')[0] + '.';
+
+        const skor = parseInt(data.persentase_kelayakan) || 0;
+
+        let shelfRuang, shelfChiller, shelfFrozen, panduanTindakan, warnaStatus;
+
+        // Logika 4 kategori rekomendasi yang tegas dan aman
+        if (skor >= 85) {
+            shelfRuang = "Maks 2-4 Jam";
+            shelfChiller = "1 - 3 Hari";
+            shelfFrozen = "3 - 6 Bulan";
+            warnaStatus = "#2bc472"; // Menggunakan hex asli untuk border dinamis
+            panduanTindakan = `<strong>[STATUS: LAYAK KONSUMSI]</strong><br>
+            🟢 Daging/ikan dalam kondisi prima dan sangat segar. Keterangan AI: ${data.alasan_kelayakan}<br>
+            <em>Saran: Aman untuk dikonsumsi langsung atau disimpan di freezer menggunakan wadah kedap udara untuk stok jangka panjang.</em>`;
+        } else if (skor >= 70) {
+            shelfRuang = "Maks 1-2 Jam";
+            shelfChiller = "1 Hari";
+            shelfFrozen = "1 Bulan";
+            warnaStatus = "#e67e22"; // Menggunakan hex asli
+            panduanTindakan = `<strong>[STATUS: KURANG LAYAK KONSUMSI]</strong><br>
+            🟡 Terjadi sedikit penurunan mutu atau perubahan visual sekecil apa pun. Keterangan AI: ${data.alasan_kelayakan}<br>
+            <em>Saran: Pastikan dicuci dengan bersih dan wajib dimasak pada suhu tinggi (minimal 75°C) sampai matang sempurna. Hindari dimasak setengah matang.</em>`;
+        } else if (skor >= 50) {
+            shelfRuang = "Segera Proses";
+            shelfChiller = "Tidak Disarankan";
+            shelfFrozen = "Jangan Disimpan";
+            warnaStatus = "#d4af37"; // Menggunakan hex asli
+            panduanTindakan = `<strong>[STATUS: MERAGUKAN]</strong><br>
+            🟠 Terdeteksi indikasi penurunan mutu visual atau warna pudar. Keterangan AI: ${data.alasan_kelayakan}<br>
+            <em>Saran: Sangat disarankan untuk memeriksa ulang aromanya terlebih dahulu. Jika berbau menyengat atau anyir tidak sedap, jangan dikonsumsi.</em>`;
+        } else {
+            shelfRuang = "Segera Dibuang";
+            shelfChiller = "Bahaya Kontaminasi";
+            shelfFrozen = "Dilarang Disimpan";
+            warnaStatus = "#ef5350"; // Menggunakan hex asli
+            panduanTindakan = `<strong>[STATUS: TIDAK LAYAK KONSUMSI]</strong><br>
+            🔴 <strong>Peringatan Keamanan Pangan!</strong> Komoditas ini menunjukkan penurunan kualitas yang parah atau kontaminasi biologis/jamur. Keterangan AI: ${data.alasan_kelayakan}<br>
+            <em>Saran: Demi kesehatan dan mencegah bahaya keracunan bakteri merugikan, harap segera dibuang.</em>`;
+        }
+
+        document.getElementById('shelfSuhuRuang').innerText = shelfRuang;
+        document.getElementById('shelfKulkas').innerText = shelfChiller;
+        document.getElementById('shelfFreezer').innerText = shelfFrozen;
+        
+        const tindakanEl = document.getElementById('resTindakan');
+        tindakanEl.innerHTML = panduanTindakan;
+        document.getElementById('tindakanContainer').style.borderLeftColor = warnaStatus;
+
+        renderChart(skor);
+        
+        resultDiv.style.display = 'block';
+        resultDiv.scrollIntoView({ behavior: 'smooth' });
+    }
+
+    function renderChart(persentase) {
+        const ctx = document.getElementById('gaugeChart').getContext('2d');
+        if (myChart) myChart.destroy();
+
+        const sisa = 100 - persentase;
+        
+        // Menggunakan warna hex langsung agar Chart.js Canvas tidak memunculkan fallback hitam
+        const colors = {
+            green: '#2bc472',
+            orange: '#e67e22',
+            gold: '#d4af37',
+            red: '#ef5350',
+            gray: '#333333'
+        };
+
+        const chartColor = persentase >= 85 ? colors.green : 
+                           (persentase >= 70 ? colors.orange : 
+                           (persentase >= 50 ? colors.gold : colors.red));
+
+        myChart = new Chart(ctx, {
+            type: 'doughnut',
+            data: {
+                labels: ['Kelayakan', 'Risiko'],
+                datasets: [{
+                    data: [persentase, sisa],
+                    backgroundColor: [chartColor, colors.gray],
+                    borderWidth: 0
+                }]
+            },
+            options: {
+                cutout: '80%',
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    legend: { display: false },
+                    tooltip: { enabled: false }
+                }
+            },
+            plugins: [{
+                id: 'textCenter',
+                beforeDraw: function(chart) {
+                    const width = chart.width, height = chart.height, ctx = chart.ctx;
+                    ctx.restore();
+                    ctx.font = "bold 1.6rem sans-serif";
+                    ctx.textBaseline = "middle";
+                    ctx.fillStyle = chartColor;
+
+                    const text = persentase + "%",
+                          textX = Math.round((width - ctx.measureText(text).width) / 2),
+                          textY = height / 2;
+
+                    ctx.fillText(text, textX, textY);
+                    ctx.save();
+                }
+            }]
+        });
+    }
+
+    function saveToHistory(item) {
+        const historyItem = {
+            id: Date.now(),
+            time: new Date().toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}),
+            jenis: item.jenis_daging,
+            skor: item.persentase_kelayakan,
+            rawFullData: item
+        };
+        scanHistory.unshift(historyItem);
+        if(scanHistory.length > 10) scanHistory.pop();
+        
+        localStorage.setItem('meat_scan_history', JSON.stringify(scanHistory));
+        renderHistoryList();
+    }
+
+    function renderHistoryList() {
+        if (scanHistory.length === 0) {
+            historyContainer.innerHTML = '<div class="empty-history">Belum ada riwayat analisis.</div>';
+            clearAllHistory.style.display = 'none';
+            return;
+        }
+
+        clearAllHistory.style.display = 'inline';
+        historyContainer.innerHTML = '';
+        
+        scanHistory.forEach(item => {
+            const itemEl = document.createElement('div');
+            itemEl.className = 'history-item';
+            itemEl.innerHTML = `
+                <div class="history-meta" style="flex: 1;">
+                    <h4>${item.jenis || 'Tidak Diketahui'}</h4>
+                    <p><i class="fa-regular fa-clock"></i> Pukul ${item.time}</p>
+                </div>
+                <div style="display: flex; align-items: center; gap: 10px;">
+                    <span class="badge" style="background:${item.skor >= 85 ? 'var(--status-green)' : (item.skor >= 70 ? 'var(--status-orange)' : (item.skor >= 50 ? 'var(--gold-primary)' : 'var(--status-red)'))}">${item.skor}%</span>
+                    <button class="btn-delete-history" data-id="${item.id}"><i class="fa-solid fa-xmark"></i></button>
+                </div>
+            `;
+            
+            itemEl.addEventListener('click', (e) => {
+                if(!e.target.closest('.btn-delete-history')) {
+                    displayResults(item.rawFullData);
+                }
+            });
+
+            itemEl.querySelector('.btn-delete-history').addEventListener('click', (e) => {
+                e.stopPropagation();
+                showConfirmModal("Apakah Anda yakin ingin menghapus item riwayat ini?", () => {
+                    deleteHistoryItem(item.id);
+                });
+            });
+
+            historyContainer.appendChild(itemEl);
+        });
+    }
+
+    function deleteHistoryItem(id) {
+        scanHistory = scanHistory.filter(item => item.id !== id);
+        localStorage.setItem('meat_scan_history', JSON.stringify(scanHistory));
+        renderHistoryList();
+        showToast("Item riwayat dihapus.", "warning");
+    }
+
+    clearAllHistory.addEventListener('click', () => {
+        showConfirmModal("Apakah Anda yakin ingin menghapus seluruh riwayat sesi?", () => {
+            scanHistory = [];
+            localStorage.removeItem('meat_scan_history');
+            renderHistoryList();
+            showToast("Semua riwayat berhasil dihapus.", "warning");
+        });
+    });
+</script>
+</body>
+</html>

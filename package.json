@@ -1,0 +1,26 @@
+{
+"name": "deteksi-daging-ai",
+"version": "1.0.0",
+"description": "Sistem Analisis Mutu Daging & Ikan berbasis Kecerdasan Buatan untuk Tugas Pengolahan Citra Digital",
+"main": "server.js",
+"type": "module",
+"scripts": {
+"start": "node server.js",
+"dev": "nodemon server.js"
+},
+"keywords": [
+"pcd",
+"image-processing",
+"gemini",
+"quality-control",
+"meat-detection"
+],
+"author": "Mahasiswa PCD",
+"license": "MIT",
+"dependencies": {
+"@google/genai": "^0.1.1",
+"dotenv": "^16.4.5",
+"express": "^4.19.2",
+"multer": "^1.4.5-lts.1"
+}
+}
